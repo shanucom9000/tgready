@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Player</title>
+
+<!-- HLS.js for .m3u8 support -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+
+  #container {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+  }
+
+  video {
+    width: 100%;
+    max-height: 90vh;
+    background: black;
+  }
+
+  #title {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  #timer, #status {
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="title">Loading...</div>
+
+  <!-- Telegram Video Player -->
+  <video id="video" controls autoplay style="display:none;"></video>
+
+  <!-- YouTube Player -->
+  <div id="player" style="display:none;"></div>
+
+  <h3 id="timer"></h3>
+  <p id="status"></p>
+</div>
+
+<!-- YouTube API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+
+// Modes
+const streamUrl = params.get("url");
+const title = params.get("title") || "Telegram Web Player";
+const uid = params.get("uid");
+
+const video = document.getElementById("video");
+const titleDiv = document.getElementById("title");
+const timerText = document.getElementById("timer");
+const statusText = document.getElementById("status");
+
+// ===============================
+// MODE 1: TELEGRAM VIDEO PLAYER
+// ===============================
+if (streamUrl) {
+  titleDiv.innerText = title;
+  video.style.display = "block";
+  timerText.style.display = "none";
+  statusText.style.display = "none";
+
+  // HLS support
+  if (streamUrl.includes(".m3u8") && Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(streamUrl);
+    hls.attachMedia(video);
+  } else {
+    video.src = streamUrl;
+  }
+}
+
+// ===============================
+// MODE 2: WATCH & EARN
+// ===============================
+else if (uid) {
+  titleDiv.innerText = "🎥 Watch & Earn";
+  document.getElementById("player").style.display = "block";
+  timerText.innerText = "⏳ Waiting for video...";
+  statusText.innerText = "Press play to start";
+
+  const API = "https://server-verify-production-80b2.up.railway.app";
+
+  let player;
+  let seconds = 0;
+  let timer = null;
+  let rewarded = false;
+
+  // YouTube player
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      height: '220',
+      width: '100%',
+      videoId: 'N0W_6SqVtfc',
+      events: { 'onStateChange': onPlayerStateChange }
+    });
+  }
+  window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING && !rewarded) startTimer();
+    if (event.data === YT.PlayerState.PAUSED) stopTimer();
+  }
+
+  function startTimer() {
+    if (timer) return;
+
+    timer = setInterval(async () => {
+      seconds++;
+      timerText.innerText = "⏳ " + seconds + " / 30";
+
+      if (seconds >= 30 && !rewarded) {
+        rewarded = true;
+        clearInterval(timer);
+
+        statusText.innerText = "Adding points...";
+
+        await fetch(`${API}/verify`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ uid: String(uid) })
+        });
+
+        statusText.innerText = "✅ Points added!";
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timer);
+    timer = null;
+    statusText.innerText = "Paused";
+  }
+}
+
+// ===============================
+// NO PARAMS
+// ===============================
+else {
+  titleDiv.innerText = "❌ Invalid link";
+}
+</script>
+
+</body>
+</html>
