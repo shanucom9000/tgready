@@ -99,7 +99,14 @@ else if (uid) {
   statusText.innerText = "Press play to start";
 
   const API = "https://server-verify-lmjr.onrender.com/";
+  const videos = [
+    "N0W_6SqVtfc",
+    "DRRtosYMA3A",
+    "rXptSZzmQIc"
+  ];
 
+  // 🎲 Pick random video
+  const randomVideo = videos[Math.floor(Math.random() * videos.length)];
   let player;
   let seconds = 0;
   let timer = null;
@@ -110,7 +117,7 @@ else if (uid) {
     player = new YT.Player('player', {
       height: '220',
       width: '100%',
-      videoId: 'N0W_6SqVtfc',
+      videoId: randomVideo,  // ✅ random video used
       events: { onStateChange: onPlayerStateChange }
     });
   };
