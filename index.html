@@ -98,15 +98,24 @@ else if (uid) {
   timerText.innerText = "⏳ Waiting for video...";
   statusText.innerText = "Press play to start";
 
-  const API = "https://server-verify-lmjr.onrender.com/";
+  const API = "https://server-verify-lmjr.onrender.com/verify";
+
+  // 🎥 Video list
   const videos = [
     "N0W_6SqVtfc",
     "DRRtosYMA3A",
     "rXptSZzmQIc"
   ];
 
-  // 🎲 Pick random video
-  const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+  // 🎲 Prevent same video repeat
+  let lastVideo = sessionStorage.getItem("lastVideo");
+  let randomVideo;
+  do {
+    randomVideo = videos[Math.floor(Math.random() * videos.length)];
+  } while (randomVideo === lastVideo);
+
+  sessionStorage.setItem("lastVideo", randomVideo);
+
   let player;
   let seconds = 0;
   let timer = null;
@@ -117,14 +126,18 @@ else if (uid) {
     player = new YT.Player('player', {
       height: '220',
       width: '100%',
-      videoId: randomVideo,  // ✅ random video used
+      videoId: randomVideo,
+      playerVars: { autoplay: 0, controls: 1 },
       events: { onStateChange: onPlayerStateChange }
     });
   };
 
   function onPlayerStateChange(event) {
-    if (event.data === YT.PlayerState.PLAYING && !rewarded) startTimer();
+    if (event.data === YT.PlayerState.PLAYING && !rewarded && seconds < 30) {
+      startTimer();
+    }
     if (event.data === YT.PlayerState.PAUSED) stopTimer();
+    if (event.data === YT.PlayerState.ENDED) stopTimer();
   }
 
   function startTimer() {
@@ -132,7 +145,14 @@ else if (uid) {
 
     timer = setInterval(async () => {
       seconds++;
-      timerText.innerText = "⏳ " + seconds + " / 30";
+
+      // 🔒 Anti skip protection
+      const currentTime = player.getCurrentTime();
+      if (currentTime < seconds - 2) {
+        seconds = Math.floor(currentTime);
+      }
+
+      timerText.innerText = "⏳ " + seconds + " / 30 seconds";
 
       if (seconds >= 30 && !rewarded) {
         rewarded = true;
@@ -142,7 +162,7 @@ else if (uid) {
         console.log("Reward UID:", uid);
 
         try {
-          const res = await fetch(`${API}/verify`, {
+          const res = await fetch(API, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ uid: String(uid) })
