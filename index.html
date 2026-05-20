@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Player</title>
+  <title>Simple Video Player</title>
 
-  <!-- HLS support -->
+  <!-- HLS support (for .m3u8 links) -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <!-- Font Awesome -->
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
@@ -19,13 +19,13 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       color: white;
     }
 
     #container {
       width: 100%;
-      max-width: 1200px;
+      max-width: 800px;
       text-align: center;
       padding: 20px;
     }
@@ -34,22 +34,15 @@
       margin-bottom: 20px;
       font-size: 24px;
       font-weight: 600;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
 
-    /* Custom Video Player Styles */
     .video-wrapper {
       position: relative;
       width: 100%;
-      max-width: 1000px;
-      margin: 0 auto;
       background: #000;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
       aspect-ratio: 16 / 9;
     }
 
@@ -57,77 +50,47 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      transition: transform 0.3s ease;
     }
 
-    .video-wrapper:fullscreen {
-      max-width: 100%;
-      width: 100vw;
-      height: 100vh;
-      border-radius: 0;
-      aspect-ratio: auto;
-    }
-    
-    .video-wrapper:-webkit-full-screen {
-      max-width: 100%;
-      width: 100vw;
-      height: 100vh;
-      border-radius: 0;
-      aspect-ratio: auto;
-    }
-
-    /* Custom Controls */
     .custom-controls {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
       background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-      padding: 40px 20px 20px;
+      padding: 30px 20px 15px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 15px;
+      gap: 20px;
       opacity: 0;
       transition: opacity 0.3s ease;
-      z-index: 10;
     }
 
-    .video-wrapper:hover .custom-controls,
-    .video-wrapper.active .custom-controls {
+    .video-wrapper:hover .custom-controls {
       opacity: 1;
     }
 
     .control-btn {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
-      width: 45px;
-      height: 45px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 18px;
+      font-size: 20px;
       transition: all 0.2s ease;
-      backdrop-filter: blur(5px);
     }
 
     .control-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.4);
       transform: scale(1.1);
     }
 
-    .control-btn:active {
-      transform: scale(0.95);
-    }
-
-    .control-btn i {
-      pointer-events: none;
-    }
-
-    /* Progress bar */
     .progress-container {
       width: 100%;
       height: 6px;
@@ -142,48 +105,12 @@
       height: 100%;
       background: #3b82f6;
       width: 0%;
-      transition: width 0.1s linear;
-      position: relative;
     }
 
-    .progress-bar::after {
-      content: '';
-      position: absolute;
-      right: -5px;
-      top: -4px;
-      width: 14px;
-      height: 14px;
-      background: white;
-      border-radius: 50%;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .progress-container:hover .progress-bar::after {
-      opacity: 1;
-    }
-
-    /* Timestamp */
     .timestamp {
       position: absolute;
       left: 20px;
       font-size: 14px;
-      font-weight: bold;
-      pointer-events: none;
-    }
-
-    /* YouTube Player */
-    #player {
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    #timer,
-    #status {
-      margin-top: 15px;
-      font-size: 16px;
     }
   </style>
 </head>
@@ -191,83 +118,49 @@
 <body>
 
   <div id="container">
-    <div id="title">Loading...</div>
+    <div id="title">Video Player</div>
 
-    <!-- Telegram Player -->
-    <div id="tg-player-wrapper" class="video-wrapper" style="display:none;">
+    <div class="video-wrapper">
       <video id="video"></video>
 
-      <div class="custom-controls" id="custom-controls">
+      <div class="custom-controls">
+        <!-- Progress Bar -->
         <div class="progress-container" id="progress-container">
           <div class="progress-bar" id="progress-bar"></div>
         </div>
 
+        <!-- Timestamp -->
         <div class="timestamp" id="timestamp">00:00 / 00:00</div>
 
+        <!-- Action Buttons -->
         <button class="control-btn" id="btn-backward" title="Backward 10s"><i class="fas fa-undo"></i></button>
         <button class="control-btn" id="btn-play-pause" title="Play/Pause"><i class="fas fa-play"></i></button>
         <button class="control-btn" id="btn-forward" title="Forward 10s"><i class="fas fa-redo"></i></button>
-        <button class="control-btn" id="btn-stop" title="Stop"><i class="fas fa-stop"></i></button>
-        <button class="control-btn" id="btn-rotate" title="Rotate"><i class="fas fa-sync-alt"></i></button>
-        <button class="control-btn" id="btn-fullscreen" title="Fullscreen"><i class="fas fa-expand"></i></button>
       </div>
     </div>
-
-    <!-- YouTube Player -->
-    <div id="player" style="display:none;"></div>
-
-    <h3 id="timer" style="display:none;"></h3>
-    <p id="status" style="display:none;"></p>
   </div>
-
-  <!-- YouTube API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-
-    // Parameters
     const streamUrl = params.get("url");
-    const title = params.get("title") || "Telegram Web Player";
-    const uid = params.get("uid");
+    const titleParam = params.get("title");
 
-    // Elements
-    const tgWrapper = document.getElementById("tg-player-wrapper");
     const video = document.getElementById("video");
     const titleDiv = document.getElementById("title");
-    const timerText = document.getElementById("timer");
-    const statusText = document.getElementById("status");
-
-    // Controls Elements
     const btnPlayPause = document.getElementById("btn-play-pause");
-    const btnStop = document.getElementById("btn-stop");
     const btnBackward = document.getElementById("btn-backward");
     const btnForward = document.getElementById("btn-forward");
-    const btnRotate = document.getElementById("btn-rotate");
-    const btnFullscreen = document.getElementById("btn-fullscreen");
     const progressBar = document.getElementById("progress-bar");
     const progressContainer = document.getElementById("progress-container");
     const timestamp = document.getElementById("timestamp");
 
-    let currentRotation = 0;
-
-    // Helper to format time
-    function formatTime(seconds) {
-      if (isNaN(seconds)) return "00:00";
-      const m = Math.floor(seconds / 60);
-      const s = Math.floor(seconds % 60);
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    // Set page title if provided in URL parameters
+    if (titleParam) {
+      titleDiv.innerText = titleParam;
     }
 
-    // =============================
-    // 🎬 TELEGRAM VIDEO MODE
-    // =============================
+    // Load Stream URL
     if (streamUrl) {
-      titleDiv.innerText = title;
-      tgWrapper.style.display = "flex"; // Show wrapper
-      timerText.style.display = "none";
-      statusText.style.display = "none";
-
       if (streamUrl.includes(".m3u8") && Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(streamUrl);
@@ -275,216 +168,65 @@
       } else {
         video.src = streamUrl;
       }
+    } else {
+      titleDiv.innerText = "No video URL provided";
+    }
 
-      // Custom Controls Logic
-      function togglePlay() {
-        if (video.paused) {
-          video.play();
-        } else {
-          video.pause();
-        }
-      }
-      btnPlayPause.addEventListener("click", togglePlay);
-      video.addEventListener("click", togglePlay);
+    // Helper to format time strings
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return "00:00";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
 
-      // Stop
-      btnStop.addEventListener("click", () => {
+    // Play & Pause
+    function togglePlay() {
+      if (video.paused) {
+        video.play().catch(e => console.log("Playback error:", e));
+      } else {
         video.pause();
-        video.currentTime = 0;
-      });
-
-      // Backward 10s
-      btnBackward.addEventListener("click", () => {
-        video.currentTime = Math.max(0, video.currentTime - 10);
-      });
-
-      // Forward 10s
-      btnForward.addEventListener("click", () => {
-        video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
-      });
-
-      // Rotate
-      btnRotate.addEventListener("click", () => {
-        currentRotation = (currentRotation + 90) % 360;
-
-        if (currentRotation % 180 !== 0) {
-          const scale = video.offsetHeight / video.offsetWidth;
-          video.style.transform = `rotate(${currentRotation}deg) scale(${scale})`;
-        } else {
-          video.style.transform = `rotate(${currentRotation}deg) scale(1)`;
-        }
-      });
-
-      // Fullscreen
-      btnFullscreen.addEventListener("click", () => {
-        if (!document.fullscreenElement) {
-          if (tgWrapper.requestFullscreen) {
-            tgWrapper.requestFullscreen();
-          } else if (tgWrapper.webkitRequestFullscreen) {
-            tgWrapper.webkitRequestFullscreen();
-          } else if (tgWrapper.msRequestFullscreen) {
-            tgWrapper.msRequestFullscreen();
-          }
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          }
-        }
-      });
-
-      // Events
-      video.addEventListener("play", () => btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>');
-      video.addEventListener("pause", () => btnPlayPause.innerHTML = '<i class="fas fa-play"></i>');
-
-      video.addEventListener("loadedmetadata", () => {
-        timestamp.innerText = `00:00 / ${formatTime(video.duration)}`;
-      });
-
-      video.addEventListener("timeupdate", () => {
-        if (video.duration) {
-          const progress = (video.currentTime / video.duration) * 100;
-          progressBar.style.width = `${progress}%`;
-          timestamp.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-        }
-      });
-
-      // Seek
-      progressContainer.addEventListener("click", (e) => {
-        const rect = progressContainer.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / progressContainer.offsetWidth;
-        video.currentTime = pos * video.duration;
-      });
-
-      // Auto hide controls
-      let hideControlsTimeout;
-      function resetControlsTimeout() {
-        tgWrapper.classList.add("active");
-        clearTimeout(hideControlsTimeout);
-        hideControlsTimeout = setTimeout(() => {
-          if (!video.paused) {
-            tgWrapper.classList.remove("active");
-          }
-        }, 3000);
-      }
-
-      tgWrapper.addEventListener("mousemove", resetControlsTimeout);
-      tgWrapper.addEventListener("mouseleave", () => {
-        if (!video.paused) {
-          tgWrapper.classList.remove("active");
-        }
-      });
-
-      // Start autoplay
-      video.play().catch(e => console.log("Autoplay prevented:", e));
-    }
-
-    // =============================
-    // 💰 WATCH & EARN MODE
-    // =============================
-    else if (uid) {
-      titleDiv.innerText = "🎥 Watch & Earn";
-      document.getElementById("player").style.display = "block";
-      timerText.style.display = "block";
-      statusText.style.display = "block";
-
-      timerText.innerText = "⏳ Waiting for video...";
-      statusText.innerText = "Press play to start";
-
-      const API = "https://server-verify-lmjr.onrender.com/verify";
-
-      // 🎥 Video list
-      const videos = [
-        "N0W_6SqVtfc",
-        "DRRtosYMA3A",
-        "rXptSZzmQIc"
-      ];
-
-      // 🎲 Prevent same video repeat
-      let lastVideo = sessionStorage.getItem("lastVideo");
-      let randomVideo;
-      do {
-        randomVideo = videos[Math.floor(Math.random() * videos.length)];
-      } while (randomVideo === lastVideo);
-
-      sessionStorage.setItem("lastVideo", randomVideo);
-
-      let player;
-      let seconds = 0;
-      let timer = null;
-      let rewarded = false;
-
-      // YouTube ready
-      window.onYouTubeIframeAPIReady = function () {
-        player = new YT.Player('player', {
-          height: '220',
-          width: '100%',
-          videoId: randomVideo,
-          playerVars: { autoplay: 0, controls: 1 },
-          events: { onStateChange: onPlayerStateChange }
-        });
-      };
-
-      function onPlayerStateChange(event) {
-        if (event.data === YT.PlayerState.PLAYING && !rewarded && seconds < 30) {
-          startTimer();
-        }
-        if (event.data === YT.PlayerState.PAUSED) stopTimer();
-        if (event.data === YT.PlayerState.ENDED) stopTimer();
-      }
-
-      function startTimer() {
-        if (timer) return;
-
-        timer = setInterval(async () => {
-          seconds++;
-
-          // 🔒 Anti skip protection
-          const currentTime = player.getCurrentTime();
-          if (currentTime < seconds - 2) {
-            seconds = Math.floor(currentTime);
-          }
-
-          timerText.innerText = "⏳ " + seconds + " / 30 seconds";
-
-          if (seconds >= 30 && !rewarded) {
-            rewarded = true;
-            clearInterval(timer);
-
-            statusText.innerText = "Adding points...";
-            console.log("Reward UID:", uid);
-
-            try {
-              const res = await fetch(API, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ uid: String(uid) })
-              });
-
-              const data = await res.json();
-              console.log("API response:", data);
-
-              statusText.innerText = "✅ Points added!";
-            } catch (err) {
-              console.error("API error:", err);
-              statusText.innerText = "❌ Failed to add points";
-            }
-          }
-        }, 1000);
-      }
-
-      function stopTimer() {
-        clearInterval(timer);
-        timer = null;
-        statusText.innerText = "Paused";
       }
     }
 
-    // =============================
-    // ❌ INVALID LINK
-    // =============================
-    else {
-      titleDiv.innerText = "❌ Invalid link";
-    }
+    btnPlayPause.addEventListener("click", togglePlay);
+    video.addEventListener("click", togglePlay);
+
+    video.addEventListener("play", () => btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>');
+    video.addEventListener("pause", () => btnPlayPause.innerHTML = '<i class="fas fa-play"></i>');
+
+    // Backward 10 seconds
+    btnBackward.addEventListener("click", () => {
+      video.currentTime = Math.max(0, video.currentTime - 10);
+    });
+
+    // Forward 10 seconds
+    btnForward.addEventListener("click", () => {
+      video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+    });
+
+    // Update Progress Bar & Timestamp
+    video.addEventListener("timeupdate", () => {
+      if (video.duration) {
+        const progress = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        timestamp.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+      }
+    });
+
+    video.addEventListener("loadedmetadata", () => {
+      timestamp.innerText = `00:00 / ${formatTime(video.duration)}`;
+    });
+
+    // Seek Click Handler
+    progressContainer.addEventListener("click", (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / progressContainer.offsetWidth;
+      video.currentTime = pos * video.duration;
+    });
+
+    // Try Autoplay
+    video.play().catch(e => console.log("Autoplay blocked initially:", e));
   </script>
 
 </body>
