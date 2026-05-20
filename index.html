@@ -25,7 +25,8 @@
 
     #container {
       width: 100%;
-      max-width: 800px;
+      /* Increased maximum width for a larger layout */
+      max-width: 1100px; 
       text-align: center;
       padding: 20px;
     }
@@ -136,6 +137,7 @@
         <button class="control-btn" id="btn-backward" title="Backward 10s"><i class="fas fa-undo"></i></button>
         <button class="control-btn" id="btn-play-pause" title="Play/Pause"><i class="fas fa-play"></i></button>
         <button class="control-btn" id="btn-forward" title="Forward 10s"><i class="fas fa-redo"></i></button>
+        <button class="control-btn" id="btn-download" title="Download Video"><i class="fas fa-download"></i></button>
       </div>
     </div>
   </div>
@@ -150,6 +152,7 @@
     const btnPlayPause = document.getElementById("btn-play-pause");
     const btnBackward = document.getElementById("btn-backward");
     const btnForward = document.getElementById("btn-forward");
+    const btnDownload = document.getElementById("btn-download");
     const progressBar = document.getElementById("progress-bar");
     const progressContainer = document.getElementById("progress-container");
     const timestamp = document.getElementById("timestamp");
@@ -203,6 +206,21 @@
     // Forward 10 seconds
     btnForward.addEventListener("click", () => {
       video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+    });
+
+    // Download Button Action
+    btnDownload.addEventListener("click", () => {
+      if (streamUrl) {
+        const a = document.createElement("a");
+        a.href = streamUrl;
+        a.download = titleParam ? `${titleParam}.mp4` : "video.mp4";
+        a.target = "_blank"; // Opens fallback link in new tab if direct download fails
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        alert("No video source found to download.");
+      }
     });
 
     // Update Progress Bar & Timestamp
