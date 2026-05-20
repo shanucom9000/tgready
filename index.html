@@ -18,15 +18,15 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       font-family: 'Segoe UI', sans-serif;
       color: white;
+      padding: 20px 0;
     }
 
     #container {
       width: 100%;
-      /* Increased maximum width for a larger layout */
-      max-width: 1100px; 
+      max-width: 1100px; /* Big screen layout */
       text-align: center;
       padding: 20px;
     }
@@ -41,7 +41,7 @@
       position: relative;
       width: 100%;
       background: #000;
-      border-radius: 12px;
+      border-radius: 12px 12px 0 0; /* Rounded top corners only */
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       aspect-ratio: 16 / 9;
@@ -53,27 +53,45 @@
       object-fit: contain;
     }
 
+    /* Controls container moved completely below the player */
     .custom-controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-      padding: 30px 20px 15px;
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 0 0 12px 12px; /* Rounded bottom corners */
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Progress bar layout below the player */
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      width: 0%;
+      border-radius: 4px;
+    }
+
+    /* Buttons row container */
+    .controls-row {
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
       gap: 20px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .video-wrapper:hover .custom-controls {
-      opacity: 1;
     }
 
     .control-btn {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
       border: none;
       color: white;
       width: 50px;
@@ -88,30 +106,15 @@
     }
 
     .control-btn:hover {
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.25);
       transform: scale(1.1);
-    }
-
-    .progress-container {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.2);
-      position: absolute;
-      top: 0;
-      left: 0;
-      cursor: pointer;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: #3b82f6;
-      width: 0%;
     }
 
     .timestamp {
       position: absolute;
-      left: 20px;
+      left: 0;
       font-size: 14px;
+      color: #94a3b8;
     }
   </style>
 </head>
@@ -121,19 +124,22 @@
   <div id="container">
     <div id="title">Video Player</div>
 
+    <!-- Video Box -->
     <div class="video-wrapper">
       <video id="video"></video>
+    </div>
 
-      <div class="custom-controls">
-        <!-- Progress Bar -->
-        <div class="progress-container" id="progress-container">
-          <div class="progress-bar" id="progress-bar"></div>
-        </div>
+    <!-- Controls Box (Positioned Down/Below the Video) -->
+    <div class="custom-controls">
+      <!-- Progress Bar (Down/Below the Video) -->
+      <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
 
-        <!-- Timestamp -->
+      <!-- Action Buttons & Timestamp -->
+      <div class="controls-row">
         <div class="timestamp" id="timestamp">00:00 / 00:00</div>
 
-        <!-- Action Buttons -->
         <button class="control-btn" id="btn-backward" title="Backward 10s"><i class="fas fa-undo"></i></button>
         <button class="control-btn" id="btn-play-pause" title="Play/Pause"><i class="fas fa-play"></i></button>
         <button class="control-btn" id="btn-forward" title="Forward 10s"><i class="fas fa-redo"></i></button>
@@ -214,7 +220,7 @@
         const a = document.createElement("a");
         a.href = streamUrl;
         a.download = titleParam ? `${titleParam}.mp4` : "video.mp4";
-        a.target = "_blank"; // Opens fallback link in new tab if direct download fails
+        a.target = "_blank";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
