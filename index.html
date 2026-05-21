@@ -4,7 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Video Player</title>
+  <title>Premium Unified Video Player</title>
+
+  <!-- Google Fonts - Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- HLS support (for .m3u8 links) -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -12,39 +17,80 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    body {
+    :root {
+      --primary: #8b5cf6;
+      --primary-hover: #a78bfa;
+      --bg-dark: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --glow-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
-      background: #0f172a;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #15102a 0%, var(--bg-dark) 100%);
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      font-family: 'Segoe UI', sans-serif;
-      color: white;
-      padding: 20px 0;
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-main);
+      overflow-x: hidden;
+      padding: 20px;
     }
 
     #container {
       width: 100%;
-      max-width: 1100px; /* Big screen layout */
-      text-align: center;
-      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
     #title {
-      margin-bottom: 20px;
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      text-align: center;
+      background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(167, 139, 250, 0.2);
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 5px;
     }
 
-    .video-wrapper {
+    /* Player Wrapper wraps Video and Custom Controls */
+    #player-wrapper {
       position: relative;
       width: 100%;
       background: #000;
-      border-radius: 12px 12px 0 0; /* Rounded top corners only */
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Video wrapper */
+    .video-container {
+      position: relative;
+      width: 100%;
       aspect-ratio: 16 / 9;
+      background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     video {
@@ -53,68 +99,235 @@
       object-fit: contain;
     }
 
-    /* Controls container moved completely below the player */
-    .custom-controls {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 0 0 12px 12px; /* Rounded bottom corners */
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    #yt-player {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
     }
 
-    /* Progress bar layout below the player */
-    .progress-container {
+    /* Controls box positioned completely below the video */
+    .custom-controls {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Progress bar layout */
+    .progress-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       width: 100%;
-      height: 8px;
+    }
+
+    .progress-container {
+      flex-grow: 1;
+      height: 6px;
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
+      border-radius: 100px;
       cursor: pointer;
       position: relative;
+      transition: height 0.2s ease;
+    }
+
+    .progress-container:hover {
+      height: 10px;
     }
 
     .progress-bar {
       height: 100%;
-      background: #3b82f6;
+      background: linear-gradient(90deg, #3b82f6, var(--primary));
       width: 0%;
-      border-radius: 4px;
+      border-radius: 100px;
+      position: relative;
+      transition: width 0.05s linear;
     }
 
-    /* Buttons row container */
+    /* Handle on progress bar */
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%) scale(0);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 8px var(--primary);
+      transition: transform 0.2s ease;
+    }
+
+    .progress-container:hover .progress-bar::after {
+      transform: translateY(-50%) scale(1);
+    }
+
+    /* Time display text */
+    .timestamp {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      min-width: 80px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Buttons layout row */
     .controls-row {
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
+      width: 100%;
       position: relative;
-      gap: 20px;
+    }
+
+    /* Left actions, Center playback, Right screen toggles */
+    .control-group-left,
+    .control-group-center,
+    .control-group-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-group-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
     .control-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      color: white;
-      width: 50px;
-      height: 50px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 20px;
-      transition: all 0.2s ease;
+      font-size: 16px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .control-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: scale(1.1);
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.4);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
     }
 
-    .timestamp {
-      position: absolute;
-      left: 0;
+    /* Play button styling - slightly larger */
+    .control-btn.play-btn {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+      border: none;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+      font-size: 18px;
+    }
+
+    .control-btn.play-btn:hover {
+      background: linear-gradient(135deg, var(--primary-hover) 0%, #4f46e5 100%);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: var(--glow-shadow);
+    }
+
+    /* Download/Fullscreen buttons */
+    .control-btn.accent-btn {
+      border-radius: 12px;
+      padding: 0 16px;
+      width: auto;
       font-size: 14px;
-      color: #94a3b8;
+      font-weight: 600;
+      gap: 8px;
+    }
+
+    .control-btn.accent-btn i {
+      font-size: 15px;
+    }
+
+    /* Responsive adjustments for phones (Android / iOS) */
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      #title {
+        font-size: 20px;
+        margin-bottom: 16px;
+      }
+
+      .custom-controls {
+        padding: 15px;
+        gap: 15px;
+      }
+
+      .control-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 15px;
+      }
+
+      .control-btn.play-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 16px;
+      }
+
+      .control-btn.accent-btn {
+        padding: 0 12px;
+        font-size: 13px;
+        border-radius: 10px;
+      }
+
+      .control-btn.accent-btn span {
+        display: none; /* Hide button text on mobile to save space */
+      }
+    }
+
+    /* Prevent overlap on very narrow Android screens */
+    @media (max-width: 480px) {
+      .control-group-center {
+        position: static;
+        transform: none;
+      }
+
+      .controls-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+
+    /* Fullscreen layout styling */
+    #player-wrapper.fullscreen-active {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      border: none;
+    }
+
+    #player-wrapper.fullscreen-active .video-container {
+      flex-grow: 1;
+      height: 0; /* Let flex-grow handle size */
+      aspect-ratio: auto;
+    }
+
+    #player-wrapper.fullscreen-active .custom-controls {
+      border-radius: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(10, 10, 12, 0.95);
     }
   </style>
 </head>
@@ -122,135 +335,379 @@
 <body>
 
   <div id="container">
-    <div id="title">Video Player</div>
+    <div id="title">Premium Video Player</div>
 
-    <!-- Video Box -->
-    <div class="video-wrapper">
-      <video id="video"></video>
-    </div>
-
-    <!-- Controls Box (Positioned Down/Below the Video) -->
-    <div class="custom-controls">
-      <!-- Progress Bar (Down/Below the Video) -->
-      <div class="progress-container" id="progress-container">
-        <div class="progress-bar" id="progress-bar"></div>
+    <!-- Outer Player Box -->
+    <div id="player-wrapper">
+      <!-- Video Frame -->
+      <div class="video-container">
+        <video id="video" playsinline></video>
+        <div id="yt-player" style="display: none;"></div>
       </div>
 
-      <!-- Action Buttons & Timestamp -->
-      <div class="controls-row">
-        <div class="timestamp" id="timestamp">00:00 / 00:00</div>
+      <!-- Control Bar (Directly below the Video) -->
+      <div class="custom-controls">
+        <!-- Progress & Time -->
+        <div class="progress-wrapper">
+          <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <div class="timestamp" id="timestamp">00:00 / 00:00</div>
+        </div>
 
-        <button class="control-btn" id="btn-backward" title="Backward 10s"><i class="fas fa-undo"></i></button>
-        <button class="control-btn" id="btn-play-pause" title="Play/Pause"><i class="fas fa-play"></i></button>
-        <button class="control-btn" id="btn-forward" title="Forward 10s"><i class="fas fa-redo"></i></button>
-        <button class="control-btn" id="btn-download" title="Download Video"><i class="fas fa-download"></i></button>
+        <!-- Buttons Row -->
+        <div class="controls-row">
+          <!-- Left Actions -->
+          <div class="control-group-left">
+            <button class="control-btn accent-btn" id="btn-download" title="Download Source">
+              <i class="fas fa-download"></i>
+              <span>Download</span>
+            </button>
+          </div>
+
+          <!-- Centered Playback controls -->
+          <div class="control-group-center">
+            <button class="control-btn" id="btn-backward" title="Backward 10s">
+              <i class="fas fa-backward"></i>
+            </button>
+            <button class="control-btn play-btn" id="btn-play-pause" title="Play / Pause">
+              <i class="fas fa-play"></i>
+            </button>
+            <button class="control-btn" id="btn-forward" title="Forward 10s">
+              <i class="fas fa-forward"></i>
+            </button>
+          </div>
+
+          <!-- Right Toggles -->
+          <div class="control-group-right">
+            <button class="control-btn" id="btn-fullscreen" title="Toggle Fullscreen">
+              <i class="fas fa-expand"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const streamUrl = params.get("url");
-    const titleParam = params.get("title");
+    // Load YouTube API script asynchronously
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // Parse params
+    function getQueryParam(name) {
+      const href = window.location.href;
+      const match = href.match(new RegExp('[?&]' + name + '=([^&#]*)'));
+      if (!match) return null;
+      
+      if (name === 'url') {
+        const urlIndex = href.indexOf('url=');
+        let sub = href.substring(urlIndex + 4);
+        
+        // Exclude other parameters like '&title=' if they are placed after 'url'
+        const titleIndex = sub.indexOf('&title=');
+        if (titleIndex !== -1) {
+          sub = sub.substring(0, titleIndex);
+        }
+        try {
+          return decodeURIComponent(sub);
+        } catch(e) {
+          return sub;
+        }
+      }
+      
+      return decodeURIComponent(match[1]);
+    }
+
+    const streamUrl = getQueryParam("url");
+    const titleParam = getQueryParam("title");
 
     const video = document.getElementById("video");
     const titleDiv = document.getElementById("title");
+    const playerWrapper = document.getElementById("player-wrapper");
+
+    // Controls
     const btnPlayPause = document.getElementById("btn-play-pause");
     const btnBackward = document.getElementById("btn-backward");
     const btnForward = document.getElementById("btn-forward");
     const btnDownload = document.getElementById("btn-download");
+    const btnFullscreen = document.getElementById("btn-fullscreen");
+
+    // Scrubber
     const progressBar = document.getElementById("progress-bar");
     const progressContainer = document.getElementById("progress-container");
     const timestamp = document.getElementById("timestamp");
 
-    // Set page title if provided in URL parameters
+    // Unified Engine State
+    let ytPlayer = null;
+    let isYoutube = false;
+    let ytProgressInterval = null;
+
+    // Set page title
     if (titleParam) {
       titleDiv.innerText = titleParam;
+      document.title = titleParam + " - Stream";
     }
 
-    // Load Stream URL
-    if (streamUrl) {
-      if (streamUrl.includes(".m3u8") && Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(streamUrl);
-        hls.attachMedia(video);
+    // YouTube URL helper
+    function getYouTubeId(url) {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // YouTube API callback
+    window.onYouTubeIframeAPIReady = function() {
+      const ytId = getYouTubeId(streamUrl);
+      if (ytId) {
+        initYoutubePlayer(ytId);
+      }
+    };
+
+    function initYoutubePlayer(videoId) {
+      isYoutube = true;
+      video.style.display = "none";
+      const ytDiv = document.getElementById("yt-player");
+      ytDiv.style.display = "block";
+
+      ytPlayer = new YT.Player('yt-player', {
+        videoId: videoId,
+        playerVars: {
+          'autoplay': 1,
+          'controls': 0, // hide native controls so we use custom control bar
+          'rel': 0,
+          'playsinline': 1,
+          'modestbranding': 1,
+          'disablekb': 1
+        },
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    function onPlayerReady(event) {
+      updateYtProgress();
+      ytProgressInterval = setInterval(updateYtProgress, 500);
+      event.target.playVideo().catch(e => console.log("Autoplay blocked initially."));
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
       } else {
-        video.src = streamUrl;
+        btnPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+      }
+    }
+
+    function updateYtProgress() {
+      if (ytPlayer && ytPlayer.getCurrentTime) {
+        const currentTime = ytPlayer.getCurrentTime();
+        const duration = ytPlayer.getDuration();
+        if (duration) {
+          const percent = (currentTime / duration) * 100;
+          progressBar.style.width = `${percent}%`;
+          timestamp.innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+      }
+    }
+
+    // Load URL if it's NOT a YouTube video
+    if (streamUrl) {
+      const ytId = getYouTubeId(streamUrl);
+      if (!ytId) {
+        if (streamUrl.includes(".m3u8") && Hls.isSupported()) {
+          const hls = new Hls({
+            maxMaxBufferLength: 30,
+            enableWorker: true
+          });
+          hls.loadSource(streamUrl);
+          hls.attachMedia(video);
+        } else {
+          video.src = streamUrl;
+        }
       }
     } else {
-      titleDiv.innerText = "No video URL provided";
+      titleDiv.innerText = "No video stream URL provided";
     }
 
-    // Helper to format time strings
+    // Format time helper
     function formatTime(seconds) {
-      if (isNaN(seconds)) return "00:00";
+      if (isNaN(seconds) || seconds === Infinity) return "00:00";
       const m = Math.floor(seconds / 60);
       const s = Math.floor(seconds % 60);
       return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // Play & Pause
+    // Playback Toggle
     function togglePlay() {
-      if (video.paused) {
-        video.play().catch(e => console.log("Playback error:", e));
+      if (isYoutube && ytPlayer) {
+        const state = ytPlayer.getPlayerState();
+        if (state === YT.PlayerState.PLAYING) {
+          ytPlayer.pauseVideo();
+        } else {
+          ytPlayer.playVideo();
+        }
       } else {
-        video.pause();
+        if (video.paused) {
+          video.play().catch(e => console.log("Playback interrupted:", e));
+        } else {
+          video.pause();
+        }
       }
     }
 
     btnPlayPause.addEventListener("click", togglePlay);
     video.addEventListener("click", togglePlay);
 
-    video.addEventListener("play", () => btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>');
-    video.addEventListener("pause", () => btnPlayPause.innerHTML = '<i class="fas fa-play"></i>');
+    video.addEventListener("play", () => {
+      btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
+    });
+    video.addEventListener("pause", () => {
+      btnPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+    });
 
-    // Backward 10 seconds
+    // Seek controls (10 seconds)
     btnBackward.addEventListener("click", () => {
-      video.currentTime = Math.max(0, video.currentTime - 10);
-    });
-
-    // Forward 10 seconds
-    btnForward.addEventListener("click", () => {
-      video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
-    });
-
-    // Download Button Action
-    btnDownload.addEventListener("click", () => {
-      if (streamUrl) {
-        const a = document.createElement("a");
-        a.href = streamUrl;
-        a.download = titleParam ? `${titleParam}.mp4` : "video.mp4";
-        a.target = "_blank";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      if (isYoutube && ytPlayer) {
+        const newTime = Math.max(0, ytPlayer.getCurrentTime() - 10);
+        ytPlayer.seekTo(newTime, true);
       } else {
-        alert("No video source found to download.");
+        video.currentTime = Math.max(0, video.currentTime - 10);
       }
     });
 
-    // Update Progress Bar & Timestamp
+    btnForward.addEventListener("click", () => {
+      if (isYoutube && ytPlayer) {
+        const duration = ytPlayer.getDuration() || 0;
+        const newTime = Math.min(duration, ytPlayer.getCurrentTime() + 10);
+        ytPlayer.seekTo(newTime, true);
+      } else {
+        video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+      }
+    });
+
+    // Fullscreen toggling logic
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        if (playerWrapper.requestFullscreen) {
+          playerWrapper.requestFullscreen();
+        } else if (playerWrapper.webkitRequestFullscreen) {
+          playerWrapper.webkitRequestFullscreen();
+        } else if (playerWrapper.msRequestFullscreen) {
+          playerWrapper.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+    }
+
+    btnFullscreen.addEventListener("click", toggleFullscreen);
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
+    function handleFullscreenChange() {
+      const isFullScreen = document.fullscreenElement || document.webkitFullscreenElement;
+      if (isFullScreen) {
+        btnFullscreen.innerHTML = '<i class="fas fa-compress"></i>';
+        playerWrapper.classList.add("fullscreen-active");
+      } else {
+        btnFullscreen.innerHTML = '<i class="fas fa-expand"></i>';
+        playerWrapper.classList.remove("fullscreen-active");
+      }
+    }
+
+    // Scrubber update (HTML5 Video)
     video.addEventListener("timeupdate", () => {
-      if (video.duration) {
-        const progress = (video.currentTime / video.duration) * 100;
-        progressBar.style.width = `${progress}%`;
+      if (!isYoutube && video.duration) {
+        const percent = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = `${percent}%`;
         timestamp.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
       }
     });
 
     video.addEventListener("loadedmetadata", () => {
-      timestamp.innerText = `00:00 / ${formatTime(video.duration)}`;
+      if (!isYoutube) {
+        timestamp.innerText = `00:00 / ${formatTime(video.duration)}`;
+      }
     });
 
-    // Seek Click Handler
+    // Manual seek
     progressContainer.addEventListener("click", (e) => {
       const rect = progressContainer.getBoundingClientRect();
       const pos = (e.clientX - rect.left) / progressContainer.offsetWidth;
-      video.currentTime = pos * video.duration;
+      
+      if (isYoutube && ytPlayer) {
+        const duration = ytPlayer.getDuration() || 0;
+        ytPlayer.seekTo(pos * duration, true);
+      } else {
+        video.currentTime = pos * (video.duration || 0);
+      }
     });
 
-    // Try Autoplay
-    video.play().catch(e => console.log("Autoplay blocked initially:", e));
+    // Download button action
+    btnDownload.addEventListener("click", () => {
+      if (streamUrl) {
+        if (isYoutube) {
+          // Open YouTube original link in a new tab
+          window.open(streamUrl, "_blank");
+        } else {
+          // Download raw video source
+          const a = document.createElement("a");
+          a.href = streamUrl;
+          a.download = titleParam ? `${titleParam}.mp4` : "video.mp4";
+          a.target = "_blank";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } else {
+        alert("No video source loaded.");
+      }
+    });
+
+    // HTML5 Video Error Diagnostics
+    video.addEventListener("error", (e) => {
+      if (!isYoutube) {
+        console.error("Video element error:", video.error);
+        let errMsg = "Error loading/playing video.";
+        if (video.error) {
+          switch (video.error.code) {
+            case 1: errMsg = "Video loading aborted by user."; break;
+            case 2: errMsg = "Network error while loading video."; break;
+            case 3: errMsg = "Video decoding failed (corrupt file or unsupported codec)."; break;
+            case 4: errMsg = "Video format or source not supported by this browser."; break;
+          }
+        }
+        titleDiv.innerText = "❌ " + errMsg;
+        titleDiv.style.background = "none";
+        titleDiv.style.webkitTextFillColor = "initial";
+        titleDiv.style.color = "#ef4444";
+      }
+    });
+
+    // Initial autoplay attempt (HTML5 Video)
+    if (!isYoutube) {
+      video.play().catch(e => console.log("Autoplay blocked initially. Waiting for user interaction."));
+    }
+
+    // Cleanup interval
+    window.addEventListener("unload", () => {
+      if (ytProgressInterval) {
+        clearInterval(ytProgressInterval);
+      }
+    });
   </script>
 
 </body>
