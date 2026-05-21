@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Unified Video Player</title>
+  <title>Premium Video Player</title>
 
   <!-- Google Fonts - Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,11 +21,11 @@
       --primary: #8b5cf6;
       --primary-hover: #a78bfa;
       --bg-dark: #090d16;
-      --card-bg: rgba(17, 24, 39, 0.7);
+      --card-bg: rgba(17, 24, 39, 0.75);
       --border-color: rgba(255, 255, 255, 0.08);
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
-      --glow-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+      --glow-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
     }
 
     * {
@@ -53,19 +53,21 @@
     }
 
     #title {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 700;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       text-align: center;
       background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 2px 10px rgba(167, 139, 250, 0.2);
       letter-spacing: -0.5px;
-      white-space: nowrap;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
       padding: 5px;
+      line-height: 1.3;
     }
 
     /* Player Wrapper wraps Video and Custom Controls */
@@ -97,15 +99,137 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
+      cursor: pointer;
     }
 
-    #yt-player {
+    /* Premium centered Play Overlay */
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+      opacity: 1;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .play-overlay:hover {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+
+    .video-container.playing .play-overlay {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+      pointer-events: none;
+    }
+
+    /* Double Tap Seek Indicators */
+    .seek-indicator {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 30%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      font-size: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 5;
+    }
+
+    .seek-indicator i {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .seek-indicator span {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .seek-indicator.left {
+      left: 0;
+      border-top-left-radius: 20px;
+      border-bottom-left-radius: 20px;
+    }
+
+    .seek-indicator.right {
+      right: 0;
+      border-top-right-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .seek-indicator.show {
+      animation: flashSeek 0.6s ease-in-out;
+    }
+
+    @keyframes flashSeek {
+      0% { opacity: 0; }
+      30% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* Error Overlay styling */
+    .error-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      border: none;
+      background: rgba(10, 10, 15, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      color: #ef4444;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .error-overlay i {
+      font-size: 40px;
+      filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));
+    }
+
+    .error-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .error-message {
+      font-size: 16px;
+      font-weight: 500;
+      color: #f3f4f6;
+      max-width: 80%;
+      line-height: 1.4;
     }
 
     /* Controls box positioned completely below the video */
@@ -118,6 +242,7 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+      transition: opacity 0.3s ease;
     }
 
     /* Progress bar layout */
@@ -243,7 +368,7 @@
       box-shadow: var(--glow-shadow);
     }
 
-    /* Download/Fullscreen buttons */
+    /* Download button */
     .control-btn.accent-btn {
       border-radius: 12px;
       padding: 0 16px;
@@ -257,6 +382,52 @@
       font-size: 15px;
     }
 
+    /* Volume controls */
+    .volume-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .volume-slider-container {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+    }
+
+    @media (hover: hover) {
+      .volume-group:hover .volume-slider-container {
+        width: 80px;
+        margin-left: 4px;
+      }
+    }
+
+    .volume-slider-container.show-volume {
+      width: 80px;
+      margin-left: 4px;
+    }
+
+    #volume-slider {
+      width: 80px;
+      height: 4px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 5px var(--primary);
+    }
+
     /* Responsive adjustments for phones (Android / iOS) */
     @media (max-width: 640px) {
       body {
@@ -264,8 +435,8 @@
       }
 
       #title {
-        font-size: 20px;
-        margin-bottom: 16px;
+        font-size: 18px;
+        margin-bottom: 12px;
       }
 
       .custom-controls {
@@ -341,8 +512,28 @@
     <div id="player-wrapper">
       <!-- Video Frame -->
       <div class="video-container">
+        <!-- Error overlay -->
+        <div class="error-overlay" id="error-overlay">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="error-message" id="error-message">Error loading video</div>
+        </div>
+
+        <!-- Center Play Button Overlay -->
+        <div class="play-overlay" id="play-overlay">
+          <i class="fas fa-play"></i>
+        </div>
+
+        <!-- Double Tap Seek Indicators -->
+        <div class="seek-indicator left" id="seek-left">
+          <i class="fas fa-backward"></i>
+          <span>10s</span>
+        </div>
+        <div class="seek-indicator right" id="seek-right">
+          <i class="fas fa-forward"></i>
+          <span>10s</span>
+        </div>
+
         <video id="video" playsinline></video>
-        <div id="yt-player" style="display: none;"></div>
       </div>
 
       <!-- Control Bar (Directly below the Video) -->
@@ -363,6 +554,14 @@
               <i class="fas fa-download"></i>
               <span>Download</span>
             </button>
+            <div class="volume-group">
+              <button class="control-btn" id="btn-volume" title="Mute / Unmute">
+                <i class="fas fa-volume-up"></i>
+              </button>
+              <div class="volume-slider-container">
+                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+              </div>
+            </div>
           </div>
 
           <!-- Centered Playback controls -->
@@ -390,24 +589,16 @@
   </div>
 
   <script>
-    // Load YouTube API script asynchronously
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    // Parse params
+    // Parse params - robust extraction that parses the entire rest of the URL for 'url='
     function getQueryParam(name) {
       const href = window.location.href;
-      const match = href.match(new RegExp('[?&]' + name + '=([^&#]*)'));
-      if (!match) return null;
-      
       if (name === 'url') {
         const urlIndex = href.indexOf('url=');
+        if (urlIndex === -1) return null;
         let sub = href.substring(urlIndex + 4);
         
-        // Exclude other parameters like '&title=' if they are placed after 'url'
-        const titleIndex = sub.indexOf('&title=');
+        // Exclude title param if appended after url parameter
+        const titleIndex = sub.lastIndexOf('&title=');
         if (titleIndex !== -1) {
           sub = sub.substring(0, titleIndex);
         }
@@ -418,13 +609,20 @@
         }
       }
       
-      return decodeURIComponent(match[1]);
+      const match = href.match(new RegExp('[?&]' + name + '=([^&#]*)'));
+      if (!match) return null;
+      try {
+        return decodeURIComponent(match[1]);
+      } catch(e) {
+        return match[1];
+      }
     }
 
     const streamUrl = getQueryParam("url");
     const titleParam = getQueryParam("title");
 
     const video = document.getElementById("video");
+    const videoContainer = document.querySelector(".video-container");
     const titleDiv = document.getElementById("title");
     const playerWrapper = document.getElementById("player-wrapper");
 
@@ -434,16 +632,19 @@
     const btnForward = document.getElementById("btn-forward");
     const btnDownload = document.getElementById("btn-download");
     const btnFullscreen = document.getElementById("btn-fullscreen");
+    const playOverlay = document.getElementById("play-overlay");
+    const errorOverlay = document.getElementById("error-overlay");
+    const errorMessage = document.getElementById("error-message");
+
+    // Volume
+    const btnVolume = document.getElementById("btn-volume");
+    const volumeSlider = document.getElementById("volume-slider");
+    const volumeIcon = btnVolume.querySelector("i");
 
     // Scrubber
     const progressBar = document.getElementById("progress-bar");
     const progressContainer = document.getElementById("progress-container");
     const timestamp = document.getElementById("timestamp");
-
-    // Unified Engine State
-    let ytPlayer = null;
-    let isYoutube = false;
-    let ytProgressInterval = null;
 
     // Set page title
     if (titleParam) {
@@ -451,90 +652,42 @@
       document.title = titleParam + " - Stream";
     }
 
-    // YouTube URL helper
-    function getYouTubeId(url) {
-      if (!url) return null;
-      
-      // Ensure the URL is actually a YouTube link to prevent matching CDN paths containing '/v/'
-      const isYouTubeDomain = url.includes("youtube.com") || url.includes("youtu.be");
-      if (!isYouTubeDomain) return null;
-
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : null;
-    }
-
-    // YouTube API callback
-    window.onYouTubeIframeAPIReady = function() {
-      const ytId = getYouTubeId(streamUrl);
-      if (ytId) {
-        initYoutubePlayer(ytId);
-      }
-    };
-
-    function initYoutubePlayer(videoId) {
-      isYoutube = true;
-      video.style.display = "none";
-      const ytDiv = document.getElementById("yt-player");
-      ytDiv.style.display = "block";
-
-      ytPlayer = new YT.Player('yt-player', {
-        videoId: videoId,
-        playerVars: {
-          'autoplay': 1,
-          'controls': 0, // hide native controls so we use custom control bar
-          'rel': 0,
-          'playsinline': 1,
-          'modestbranding': 1,
-          'disablekb': 1
-        },
-        events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
-        }
-      });
-    }
-
-    function onPlayerReady(event) {
-      updateYtProgress();
-      ytProgressInterval = setInterval(updateYtProgress, 500);
-      event.target.playVideo().catch(e => console.log("Autoplay blocked initially."));
-    }
-
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) {
-        btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
-      } else {
-        btnPlayPause.innerHTML = '<i class="fas fa-play"></i>';
-      }
-    }
-
-    function updateYtProgress() {
-      if (ytPlayer && ytPlayer.getCurrentTime) {
-        const currentTime = ytPlayer.getCurrentTime();
-        const duration = ytPlayer.getDuration();
-        if (duration) {
-          const percent = (currentTime / duration) * 100;
-          progressBar.style.width = `${percent}%`;
-          timestamp.innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-        }
-      }
-    }
-
-    // Load URL if it's NOT a YouTube video
+    // Load video stream (Robust HLS loader with Native & Hls.js fallback + error recovery)
     if (streamUrl) {
-      const ytId = getYouTubeId(streamUrl);
-      if (!ytId) {
-        if (streamUrl.includes(".m3u8") && Hls.isSupported()) {
-          const hls = new Hls({
-            maxMaxBufferLength: 30,
-            enableWorker: true
-          });
-          hls.loadSource(streamUrl);
-          hls.attachMedia(video);
-        } else {
-          video.src = streamUrl;
-        }
+      const isHls = streamUrl.toLowerCase().includes("m3u8");
+      if (isHls && Hls.isSupported()) {
+        const hls = new Hls({
+          maxMaxBufferLength: 30,
+          enableWorker: true,
+          lowLatencyMode: true
+        });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.ERROR, function (event, data) {
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.warn("HLS Network Error, recovering...", data);
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.warn("HLS Media Error, recovering...", data);
+                hls.recoverMediaError();
+                break;
+              default:
+                console.error("Fatal HLS Error, falling back to direct src...", data);
+                video.src = streamUrl;
+                break;
+            }
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support (Safari / iOS)
+        video.src = streamUrl;
+      } else {
+        // Direct MP4 / general video formats
+        video.src = streamUrl;
       }
     } else {
       titleDiv.innerText = "No video stream URL provided";
@@ -550,50 +703,82 @@
 
     // Playback Toggle
     function togglePlay() {
-      if (isYoutube && ytPlayer) {
-        const state = ytPlayer.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) {
-          ytPlayer.pauseVideo();
-        } else {
-          ytPlayer.playVideo();
-        }
+      if (video.paused) {
+        video.play().catch(e => console.log("Playback interrupted:", e));
       } else {
-        if (video.paused) {
-          video.play().catch(e => console.log("Playback interrupted:", e));
-        } else {
-          video.pause();
-        }
+        video.pause();
+      }
+    }
+
+    // Update play state classes and icons
+    function updatePlayState() {
+      if (video.paused) {
+        btnPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+        videoContainer.classList.remove("playing");
+      } else {
+        btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
+        videoContainer.classList.add("playing");
       }
     }
 
     btnPlayPause.addEventListener("click", togglePlay);
-    video.addEventListener("click", togglePlay);
-
-    video.addEventListener("play", () => {
-      btnPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
-    });
-    video.addEventListener("pause", () => {
-      btnPlayPause.innerHTML = '<i class="fas fa-play"></i>';
-    });
+    playOverlay.addEventListener("click", togglePlay);
+    
+    video.addEventListener("play", updatePlayState);
+    video.addEventListener("pause", updatePlayState);
 
     // Seek controls (10 seconds)
     btnBackward.addEventListener("click", () => {
-      if (isYoutube && ytPlayer) {
-        const newTime = Math.max(0, ytPlayer.getCurrentTime() - 10);
-        ytPlayer.seekTo(newTime, true);
-      } else {
-        video.currentTime = Math.max(0, video.currentTime - 10);
-      }
+      video.currentTime = Math.max(0, video.currentTime - 10);
     });
 
     btnForward.addEventListener("click", () => {
-      if (isYoutube && ytPlayer) {
-        const duration = ytPlayer.getDuration() || 0;
-        const newTime = Math.min(duration, ytPlayer.getCurrentTime() + 10);
-        ytPlayer.seekTo(newTime, true);
+      video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+    });
+
+    // Double Tap Seek on video element (left/right side)
+    let lastTap = 0;
+    const seekLeft = document.getElementById("seek-left");
+    const seekRight = document.getElementById("seek-right");
+
+    function showSeekIndicator(direction) {
+      const indicator = direction === "backward" ? seekLeft : seekRight;
+      indicator.classList.remove("show");
+      void indicator.offsetWidth; // Force reflow
+      indicator.classList.add("show");
+    }
+
+    video.addEventListener("click", (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        // Double tap detected
+        const rect = video.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        if (clickX < width * 0.4) {
+          // Double tapped left side (40% width boundary)
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          showSeekIndicator("backward");
+        } else if (clickX > width * 0.6) {
+          // Double tapped right side (60% width boundary)
+          video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+          showSeekIndicator("forward");
+        } else {
+          // Center tap: toggle play
+          togglePlay();
+        }
+        e.preventDefault();
       } else {
-        video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+        // Single tap: trigger toggle play/pause after delay
+        setTimeout(() => {
+          const doubleTapped = (new Date().getTime() - lastTap) < 300;
+          if (!doubleTapped) {
+            togglePlay();
+          }
+        }, 200);
       }
+      lastTap = currentTime;
     });
 
     // Fullscreen toggling logic
@@ -633,9 +818,41 @@
       }
     }
 
-    // Scrubber update (HTML5 Video)
+    // Auto-hide controls and cursor on inactivity during fullscreen
+    let inactivityTimeout;
+    function resetInactivityTimeout() {
+      if (!document.fullscreenElement) {
+        showControls();
+        return;
+      }
+      showControls();
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = setTimeout(hideControls, 3000);
+    }
+
+    function hideControls() {
+      if (document.fullscreenElement) {
+        playerWrapper.style.cursor = 'none';
+        const controls = document.querySelector(".custom-controls");
+        controls.style.opacity = '0';
+        controls.style.pointerEvents = 'none';
+      }
+    }
+
+    function showControls() {
+      playerWrapper.style.cursor = 'default';
+      const controls = document.querySelector(".custom-controls");
+      controls.style.opacity = '1';
+      controls.style.pointerEvents = 'auto';
+    }
+
+    playerWrapper.addEventListener("mousemove", resetInactivityTimeout);
+    playerWrapper.addEventListener("click", resetInactivityTimeout);
+    playerWrapper.addEventListener("touchstart", resetInactivityTimeout);
+
+    // Scrubber progress updates
     video.addEventListener("timeupdate", () => {
-      if (!isYoutube && video.duration) {
+      if (video.duration && !isDragging) {
         const percent = (video.currentTime / video.duration) * 100;
         progressBar.style.width = `${percent}%`;
         timestamp.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
@@ -643,76 +860,212 @@
     });
 
     video.addEventListener("loadedmetadata", () => {
-      if (!isYoutube) {
-        timestamp.innerText = `00:00 / ${formatTime(video.duration)}`;
+      timestamp.innerText = `00:00 / ${formatTime(video.duration)}`;
+    });
+
+    // Scrubber drag seek logic
+    let isDragging = false;
+    
+    function scrub(e) {
+      const rect = progressContainer.getBoundingClientRect();
+      let pos = (e.clientX - rect.left) / rect.width;
+      pos = Math.max(0, Math.min(1, pos));
+      progressBar.style.width = `${pos * 100}%`;
+      if (!isDragging) {
+        video.currentTime = pos * (video.duration || 0);
+      }
+      return pos;
+    }
+
+    progressContainer.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      scrub(e);
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        scrub(e);
       }
     });
 
-    // Manual seek
-    progressContainer.addEventListener("click", (e) => {
-      const rect = progressContainer.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / progressContainer.offsetWidth;
-      
-      if (isYoutube && ytPlayer) {
-        const duration = ytPlayer.getDuration() || 0;
-        ytPlayer.seekTo(pos * duration, true);
-      } else {
+    document.addEventListener("mouseup", (e) => {
+      if (isDragging) {
+        const pos = scrub(e);
         video.currentTime = pos * (video.duration || 0);
+        isDragging = false;
+      }
+    });
+
+    // Touch support for progress bar scrubbing
+    progressContainer.addEventListener("touchstart", (e) => {
+      isDragging = true;
+      scrub(e.touches[0]);
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      if (isDragging) {
+        scrub(e.touches[0]);
+      }
+    });
+
+    document.addEventListener("touchend", (e) => {
+      if (isDragging) {
+        isDragging = false;
+      }
+    });
+
+    // Volume Adjustment & Icon Updates
+    let lastVolume = 1.0;
+    let volumeTimeout;
+
+    function updateVolumeIcon(vol, isMuted) {
+      volumeIcon.className = "";
+      if (isMuted || vol === 0) {
+        volumeIcon.classList.add("fas", "fa-volume-mute");
+      } else if (vol < 0.5) {
+        volumeIcon.classList.add("fas", "fa-volume-down");
+      } else {
+        volumeIcon.classList.add("fas", "fa-volume-up");
+      }
+    }
+
+    btnVolume.addEventListener("click", (e) => {
+      // On mobile viewports, show volume slider container first on click
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      if (isMobile) {
+        const sliderContainer = document.querySelector(".volume-slider-container");
+        if (!sliderContainer.classList.contains("show-volume")) {
+          e.preventDefault();
+          sliderContainer.classList.add("show-volume");
+          clearTimeout(volumeTimeout);
+          volumeTimeout = setTimeout(() => {
+            sliderContainer.classList.remove("show-volume");
+          }, 4000);
+          return;
+        }
+      }
+
+      if (video.muted) {
+        video.muted = false;
+        video.volume = lastVolume;
+        volumeSlider.value = lastVolume;
+        updateVolumeIcon(lastVolume, false);
+      } else {
+        lastVolume = video.volume;
+        video.muted = true;
+        video.volume = 0;
+        volumeSlider.value = 0;
+        updateVolumeIcon(0, true);
+      }
+    });
+
+    volumeSlider.addEventListener("input", (e) => {
+      const vol = parseFloat(e.target.value);
+      video.volume = vol;
+      if (vol === 0) {
+        video.muted = true;
+        updateVolumeIcon(0, true);
+      } else {
+        video.muted = false;
+        lastVolume = vol;
+        updateVolumeIcon(vol, false);
+      }
+
+      // Keep it visible on mobile while sliding
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      if (isMobile) {
+        const sliderContainer = document.querySelector(".volume-slider-container");
+        clearTimeout(volumeTimeout);
+        volumeTimeout = setTimeout(() => {
+          sliderContainer.classList.remove("show-volume");
+        }, 4000);
       }
     });
 
     // Download button action
     btnDownload.addEventListener("click", () => {
       if (streamUrl) {
-        if (isYoutube) {
-          // Open YouTube original link in a new tab
-          window.open(streamUrl, "_blank");
-        } else {
-          // Download raw video source
-          const a = document.createElement("a");
-          a.href = streamUrl;
-          a.download = titleParam ? `${titleParam}.mp4` : "video.mp4";
-          a.target = "_blank";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
+        const a = document.createElement("a");
+        a.href = streamUrl;
+        a.download = titleParam ? `${titleParam}.mp4` : "video.mp4";
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else {
         alert("No video source loaded.");
       }
     });
 
-    // HTML5 Video Error Diagnostics
-    video.addEventListener("error", (e) => {
-      if (!isYoutube) {
-        console.error("Video element error:", video.error);
-        let errMsg = "Error loading/playing video.";
-        if (video.error) {
-          switch (video.error.code) {
-            case 1: errMsg = "Video loading aborted by user."; break;
-            case 2: errMsg = "Network error while loading video."; break;
-            case 3: errMsg = "Video decoding failed (corrupt file or unsupported codec)."; break;
-            case 4: errMsg = "Video format or source not supported by this browser."; break;
+    // Desktop Hotkeys / Keyboard Shortcuts
+    document.addEventListener("keydown", (e) => {
+      if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") {
+        return;
+      }
+      
+      switch (e.key.toLowerCase()) {
+        case " ":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "arrowleft":
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          showSeekIndicator("backward");
+          break;
+        case "arrowright":
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+          showSeekIndicator("forward");
+          break;
+        case "arrowup":
+          e.preventDefault();
+          video.volume = Math.min(1.0, video.volume + 0.05);
+          volumeSlider.value = video.volume;
+          video.muted = false;
+          updateVolumeIcon(video.volume, false);
+          break;
+        case "arrowdown":
+          e.preventDefault();
+          video.volume = Math.max(0.0, video.volume - 0.05);
+          volumeSlider.value = video.volume;
+          if (video.volume === 0) {
+            video.muted = true;
+            updateVolumeIcon(0, true);
+          } else {
+            video.muted = false;
+            updateVolumeIcon(video.volume, false);
           }
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "m":
+          e.preventDefault();
+          btnVolume.click();
+          break;
+      }
+    });
+
+    // Video Error Diagnostics
+    video.addEventListener("error", (e) => {
+      console.error("Video element error:", video.error);
+      let errMsg = "Error loading/playing video.";
+      if (video.error) {
+        switch (video.error.code) {
+          case 1: errMsg = "Video loading was aborted."; break;
+          case 2: errMsg = "Network error. Please check your internet connection."; break;
+          case 3: errMsg = "Video decoding failed. The media format or codec is not supported by your browser."; break;
+          case 4: errMsg = "This video format or platform stream is not supported by your browser."; break;
         }
-        titleDiv.innerText = "❌ " + errMsg;
-        titleDiv.style.background = "none";
-        titleDiv.style.webkitTextFillColor = "initial";
-        titleDiv.style.color = "#ef4444";
       }
+      errorMessage.innerText = errMsg;
+      errorOverlay.classList.add("show");
     });
 
-    // Initial autoplay attempt (HTML5 Video)
-    if (!isYoutube) {
-      video.play().catch(e => console.log("Autoplay blocked initially. Waiting for user interaction."));
-    }
-
-    // Cleanup interval
-    window.addEventListener("unload", () => {
-      if (ytProgressInterval) {
-        clearInterval(ytProgressInterval);
-      }
-    });
+    // Initial autoplay attempt
+    video.play().catch(e => console.log("Autoplay blocked initially. Waiting for user interaction."));
   </script>
 
 </body>
