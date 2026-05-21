@@ -454,6 +454,11 @@
     // YouTube URL helper
     function getYouTubeId(url) {
       if (!url) return null;
+      
+      // Ensure the URL is actually a YouTube link to prevent matching CDN paths containing '/v/'
+      const isYouTubeDomain = url.includes("youtube.com") || url.includes("youtu.be");
+      if (!isYouTubeDomain) return null;
+
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = url.match(regExp);
       return (match && match[2].length === 11) ? match[2] : null;
